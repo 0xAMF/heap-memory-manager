@@ -1,27 +1,25 @@
 #include "hmm.h"
-#include <stdio.h>
-#include <unistd.h>
 
 static block_t *baseptr = NULL;	/* the head of the free list */
 static block_t *tailptr = NULL;
 
-//
-// void *malloc(size_t size) {
-// 	return my_malloc(size);
-// }
-//
-//
-// void free(void * mem) {
-// 	my_free(mem);
-// }
-//
-// void *calloc(size_t nmemb, size_t size) {
-// 	return NULL;
-// }
-//
-// void *realloc(void *ptr, size_t size) {
-// 	return NULL;
-// }
+#ifdef _USE_LIB
+void *malloc(size_t size) {
+	return my_malloc(size);
+}
+
+void free(void * mem) {
+	my_free(mem);
+}
+
+void *calloc(size_t nmemb, size_t size) {
+	return my_calloc(nmemb, size);
+}
+
+void *realloc(void *ptr, size_t size) {
+	return my_realloc(ptr, size);
+}
+#endif
 
 /*
  * @brief : initializes the memory list, and rasising the brk with a big chunk of memory for latter usage
@@ -130,8 +128,8 @@ void *my_malloc(size_t size)
 	block_t *block = NULL;
 	char inuse = -1;
 
-	// check size, return NULL if zero or negative
-	if (size <= 0) {
+	// check size, return NULL if negative
+	if (size < 0) {
 		return NULL;
 	}
 
@@ -298,14 +296,59 @@ void my_free(void *memory)
 	}
 }
 
+/*
+ * @brief : allocating zero initialed memory
+ * @param : nmemb: number of elements of size bytes
+ * @param : size: the size of each element
+ * @return: a pointer to zero initialed memory
+ */
+void *my_calloc(size_t nmemb, size_t size) {
+	void *retptr = NULL;
+
+	if (nmemb == 0) {
+		return NULL;
+	}
+	retptr = my_malloc(nmemb * size);
+	retptr = memset(retptr, 0, (nmemb * size));
+
+	return retptr;
+}
+
+/*
+ * @brief : reallocating the memory with different size 
+ * @param : a pointer to the memory we want to reallocate
+ * @param : The new size to reallocate to
+ * @return: a pointer to the new memory with the new size
+ */
+void *my_realloc(void *ptr, size_t size) {
+	void *retptr = NULL;
+	block_t *block = (block_t *)(ptr - sizeof(block_t));
+
+	if (ptr == NULL) {
+		retptr = my_malloc(size);
+		return retptr;
+	}
+	if (size == 0 && ptr != NULL) {
+		my_free(ptr);
+	}
+	if (size > block->meta.size) {
+		retptr = my_malloc(size);
+		retptr = memcpy(retptr, ptr, block->meta.size);
+	}
+	else {
+		return ptr;
+	}
+
+	return retptr;
+}
+
 void display_list()
 {
-	int i = 1;
 	block_t *tempNode = baseptr;
 	while (tempNode != NULL) {
-		printf("[%i] size = %ld\t  %16p <-  %16p   -> %16p\t inuse = %i\n", i,tempNode->meta.size,
+		printf("size = %ld\t  %16p <-  %16p   -> %16p\t inuse = %i\n", tempNode->meta.size,
 		       (tempNode->meta.prev) + 1,tempNode + 1, (tempNode->meta.next) + 1,tempNode->meta.inuse);
+
 		tempNode = tempNode->meta.next;
-		i++;
 	}
 }

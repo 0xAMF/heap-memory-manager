@@ -1,7 +1,7 @@
 LIB = libhmm.so
 TARGET = myalloc.c
 MAINTARGET = main.c
-TEST = ./test/free_and_sbrk.c
+TEST = ./test/allocate.c
 OUT = main
 OBJ = myalloc.o
 
@@ -28,5 +28,6 @@ clean:
 	@echo cleaning the project...
 	@rm $(OBJ) 
 	@rm $(OUT)
+	@rm output.map 
 	# @rm $(LIB)
 	@echo ===DONE!!===
