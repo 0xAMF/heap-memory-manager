@@ -1,4 +1,5 @@
 #include "hmm.h"
+#include <stdio.h>
 
 static block_t *baseptr = NULL;	/* the head of the free list */
 static block_t *tailptr = NULL;
@@ -51,7 +52,18 @@ static block_t *init_heap(size_t size)
 }
 
 /*
- * @brief : adds a memory block to the list
+ * @brief : adds a memory block to the beginning of the list
+ * @param : reference to the address of the block
+ */
+static void insert_head(block_t **block) {
+	baseptr->meta.prev = *block;
+	(*block)->meta.next = baseptr;
+	(*block)->meta.prev = NULL;
+
+	baseptr = *block;
+}
+/*
+ * @brief : adds a memory block to the end of the list
  * @param : reference to the address of the block
  */
 static void append(block_t **block) {
@@ -71,13 +83,13 @@ static block_t *split(block_t ** block, size_t size)
 {
 	block_t *newblock;
 	// pointer to the end of the block
-	block_t *block_end = (*block) + ((*block)->meta.size / sizeof(block_t)) + sizeof(block_t);
+	block_t *block_end = (*block) + ((*block)->meta.size / sizeof(block_t)) + 1;
 	// the required size to split to
 	size_t req_size = size + sizeof(block_t);
 
 	// check if the block viable for splitting
 	if (size + sizeof(block_t) >= (*block)->meta.size) {
-		return NULL;
+		return *block;
 	}
 
 	size_t remainsize = ((*block)->meta.size) - req_size;
@@ -86,7 +98,7 @@ static block_t *split(block_t ** block, size_t size)
 	(*block)->meta.inuse = 0;
 
 	// initialize new block
-	newblock = block_end - req_size/sizeof(block_t);
+	newblock = block_end - (req_size/sizeof(block_t));
 	newblock->meta.size = size;
 	newblock->meta.inuse = 0;
 	// add the new block to the list
@@ -154,7 +166,8 @@ void *my_malloc(size_t size)
 			if (tempbase->meta.size >= size && inuse == 0) {
 				block = getblock(tempbase, size);
 				// if the block cannot be split
-				if (block == NULL) {
+				if (block == tempbase) {
+					tempbase = tempbase->meta.next;
 					continue;
 				}
 				memory = (block + 1);
@@ -166,18 +179,21 @@ void *my_malloc(size_t size)
 		/* if no block is found */
 		if (memory == NULL) {
 			// request memory from the kernel
-			size_t units = (sizeof(block_t) + size);
+			size_t units = (sizeof(block_t) + FIRST_ALLOC_SIZE);
 			void *mem = (void *)sbrk(units);
 			if (mem == (void *)-1) {
 				/* 5alas b2a */
 				memory = NULL;
 			}
 			block = (block_t *) mem;
+			block->meta.size = FIRST_ALLOC_SIZE;
+			block->meta.inuse = 0;
+			insert_head(&block);
 			// add the new block to the list
-			append(&block);
-			block->meta.inuse = 1;
-			block->meta.size = size;
-			memory = (block + 1);
+			block_t *newblock = split(&block, size);
+			newblock->meta.inuse = 1;
+			newblock->meta.size = size;
+			memory = (newblock + 1);
 		}
 	}
 
@@ -268,7 +284,6 @@ void my_free(void *memory)
 		block = (block_t *) (memory - sizeof(block_t));
 		if (block->meta.inuse) {
 			block->meta.inuse = 0;
-
 			block_t *next = block->meta.next;
 			block_t *prev = block->meta.prev;
 
@@ -325,8 +340,7 @@ void *my_realloc(void *ptr, size_t size) {
 	block_t *block = (block_t *)(ptr - sizeof(block_t));
 
 	if (ptr == NULL) {
-		retptr = my_malloc(size);
-		return retptr;
+		return my_malloc(size);
 	}
 	if (size == 0 && ptr != NULL) {
 		my_free(ptr);
@@ -334,6 +348,7 @@ void *my_realloc(void *ptr, size_t size) {
 	if (size > block->meta.size) {
 		retptr = my_malloc(size);
 		retptr = memcpy(retptr, ptr, block->meta.size);
+		my_free(ptr);
 	}
 	else {
 		return ptr;
