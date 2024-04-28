@@ -10,7 +10,7 @@
 
 #define FIRST_ALLOC_SIZE 132000
 #define FREE_SIZE_LIMIT  128000
-#define MAX_BLOCK_SIZE   800000
+#define MAX_BLOCK_SIZE   300000
 #define _USE_LIB
 
 extern char end;

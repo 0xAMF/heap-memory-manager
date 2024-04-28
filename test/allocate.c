@@ -27,8 +27,8 @@ int *p[500];
 int main(int argc, char *argv[])
 {
 
-     for (int i = 0; i < 1; i++) {
-         p[i] = my_malloc(1000);
+     for (int i = 0; i < 200; i++) {
+         p[i] = my_malloc(1000 *(i + 1));
      }
 
     // for (int i = 0; i < 500; i++) {

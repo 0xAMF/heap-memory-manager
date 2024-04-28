@@ -74,6 +74,18 @@ static void append(block_t **block) {
 	tailptr = *block;
 }
 
+static void insert_block(block_t **block, block_t **prevblock) {
+	if ((*prevblock)->meta.next != NULL) {
+		(*prevblock)->meta.next->meta.prev = *block;
+		(*block)->meta.next = (*prevblock)->meta.next;
+		(*prevblock)->meta.next = *block;
+		(*block)->meta.prev = *prevblock;
+
+	} else {
+		append(block);
+	}
+}
+
 /*
  * @param : reference to the address of the block we want to split and the size 
  * @param : the size we want to split to
@@ -102,7 +114,8 @@ static block_t *split(block_t ** block, size_t size)
 	newblock->meta.size = size;
 	newblock->meta.inuse = 0;
 	// add the new block to the list
-	append(&newblock);
+	insert_block(&newblock, block);
+	// append(&newblock);
 
 	return newblock;
 }
@@ -188,7 +201,7 @@ void *my_malloc(size_t size)
 			block = (block_t *) mem;
 			block->meta.size = FIRST_ALLOC_SIZE;
 			block->meta.inuse = 0;
-			insert_head(&block);
+			append(&block);
 			// add the new block to the list
 			block_t *newblock = split(&block, size);
 			newblock->meta.inuse = 1;
@@ -218,6 +231,7 @@ static block_t *unlink_block(block_t ** block) {
 		tailptr = NULL;
 	}
 	else if (nextblock == NULL) { // removing the tail block
+		tailptr = prevblock;
 		prevblock->meta.next = current->meta.next;
 	}
 	else if (prevblock == NULL) { // removing the head block
@@ -288,7 +302,7 @@ void my_free(void *memory)
 			block_t *prev = block->meta.prev;
 
 			// if the block is at the end of the heap
-			if (block == tailptr) {
+			if (block->meta.next == tailptr) {
 				merged = merge(&block);
 				// check if the block is big enough to give the memory back to the kernel
 				if (merged != NULL && merged->meta.size >= FREE_SIZE_LIMIT) {
@@ -297,11 +311,9 @@ void my_free(void *memory)
 					sbrk(-brk_off);
 				}
 			}
-			if (next != NULL && prev != NULL) {
+			else if (next != NULL && prev != NULL) {
 				if (next->meta.inuse == 0 || prev->meta.inuse == 0) {
-					if (prev->meta.size <= MAX_BLOCK_SIZE) {
-						merged = merge(&block);
-					}
+					merged = merge(&block);
 				}
 			}
 		}
@@ -362,7 +374,7 @@ void display_list()
 	block_t *tempNode = baseptr;
 	while (tempNode != NULL) {
 		printf("size = %ld\t  %16p <-  %16p   -> %16p\t inuse = %i\n", tempNode->meta.size,
-		       (tempNode->meta.prev) + 1,tempNode + 1, (tempNode->meta.next) + 1,tempNode->meta.inuse);
+		       (tempNode->meta.prev),tempNode, (tempNode->meta.next) ,tempNode->meta.inuse);
 
 		tempNode = tempNode->meta.next;
 	}
