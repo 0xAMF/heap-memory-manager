@@ -52,17 +52,6 @@ static block_t *init_heap(size_t size)
 }
 
 /*
- * @brief : adds a memory block to the beginning of the list
- * @param : reference to the address of the block
- */
-static void insert_head(block_t **block) {
-	baseptr->meta.prev = *block;
-	(*block)->meta.next = baseptr;
-	(*block)->meta.prev = NULL;
-
-	baseptr = *block;
-}
-/*
  * @brief : adds a memory block to the end of the list
  * @param : reference to the address of the block
  */
@@ -74,6 +63,11 @@ static void append(block_t **block) {
 	tailptr = *block;
 }
 
+/*
+ * @brief : adds a memory block to the list
+ * @param : reference to the address of the block
+ * @param : reference to the address of the previous block
+ */
 static void insert_block(block_t **block, block_t **prevblock) {
 	if ((*prevblock)->meta.next != NULL) {
 		(*prevblock)->meta.next->meta.prev = *block;
