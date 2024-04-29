@@ -26,7 +26,7 @@ make lib
 export LD_LIBRARY_PATH=.
 ```
 
-3. Change the `MAINTARGET` variable in the `Makefile` and run `make`, or compile using this command
+3. Change the `TEST` variable in the `Makefile` and run `make test`, or compile using this command
 
 ```bash
 gcc -g -o <output> <input_file> libhmm.so
