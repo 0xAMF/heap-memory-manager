@@ -19,22 +19,6 @@ test: lib
 	@gcc -g -Wall -o $(OUT) $(TEST) $(LIB) -Wl,-Map=output.map
 	@echo === DONE: now run ./main  ===
 
-randomtest: lib
-	@echo building basic test
-	@gcc -g -Wall -o $(OUT) $(RANDOM) $(LIB) -Wl,-Map=output.map
-	@echo === DONE: now run ./main ===
-
-
-basictest: lib
-	@echo building basic test
-	@gcc -g -Wall -o $(OUT) $(BASICTEST) $(LIB) -Wl,-Map=output.map
-	@echo === DONE: now run ./main ===
-
-sbrktest: lib
-	@echo building free_and_sbrk test
-	@gcc -g -Wall -o $(OUT) $(SBRKTEST) $(LIB) -Wl,-Map=output.map
-	@echo === DONE: now run ./main ...args ===
-	
 objects: $(TARGET) 
 	@echo compiling target...
 	@gcc -g -c -fPIC -Wall $(TARGET)
