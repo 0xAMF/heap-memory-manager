@@ -14,9 +14,10 @@ build: lib
 	@gcc -g -Wall -o $(OUT) $(MAINTARGET) $(LIB) 
 	@echo ===DONE!!===
 
+
 test: lib
 	@echo building quick test 
-	@gcc -g -Wall -o $(OUT) $(TEST) $(LIB) -Wl,-Map=output.map
+	@gcc -g -Wall -o $(OUT) $(TEST) $(LIB) 
 	@echo === DONE: now run ./main  ===
 
 objects: $(TARGET) 
