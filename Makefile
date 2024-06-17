@@ -26,12 +26,11 @@ objects: $(TARGET)
 	
 lib: objects 
 	@echo compiling the shared library...
-	@gcc -g -shared -o $(LIB) $(OBJ)
+	@gcc -g -shared -o $(LIB) $(OBJ) 
 
 clean:
 	@echo cleaning the project...
 	@rm $(OBJ) 
 	@rm $(OUT)
-	@rm output.map 
-	# @rm $(LIB)
+	@rm $(LIB)
 	@echo ===DONE!!===
